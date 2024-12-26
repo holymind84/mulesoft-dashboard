@@ -1,0 +1,175 @@
+.page-content {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.stats-form {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.submit-button,
+.refresh-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.submit-button {
+  background-color: #007bff;
+  color: white;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.refresh-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background-color: #388E3C;
+}
+
+.submit-button:disabled,
+.refresh-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.error {
+  background-color: #fff3f3;
+  border: 1px solid #ffcdd2;
+  color: #d32f2f;
+  padding: 12px;
+  border-radius: 4px;
+  margin: 20px 0;
+}
+
+.stores-table {
+  margin: 20px 0;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow-x: auto;
+}
+
+.stores-table h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.stores-table table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.stores-table th,
+.stores-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.stores-table th {
+  background-color: #f8f9fa;
+  font-weight: 500;
+  color: #555;
+}
+
+.stores-table tr:hover {
+  background-color: #f5f5f5;
+}
+
+.combined-chart,
+.stats-result {
+  margin: 20px 0;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.combined-chart h3,
+.stats-result h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.chart-container {
+  margin-top: 20px;
+  height: 400px;
+}
+
+.store-select {
+  max-width: 300px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .button-group {
+    flex-direction: column;
+  }
+  
+  .submit-button,
+  .refresh-button {
+    width: 100%;
+  }
+  
+  .stores-table {
+    margin: 10px 0;
+    padding: 10px;
+  }
+  
+  .form-group input,
+  .form-group select {
+    font-size: 16px; /* Better for mobile touch */
+  }
+}

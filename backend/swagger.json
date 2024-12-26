@@ -1,0 +1,318 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Mulesoft Metrics Dashboard API",
+    "version": "1.0.0",
+    "description": "API documentation for Mulesoft Metrics Dashboard backend services"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/api/token/status": {
+      "get": {
+        "summary": "Get standard token status",
+        "responses": {
+          "200": {
+            "description": "Token status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": { "type": "string" },
+                    "expiresAt": { "type": "number" },
+                    "isValid": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Token error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/token/core/status": {
+      "get": {
+        "summary": "Get core token status",
+        "responses": {
+          "200": {
+            "description": "Core token status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": { "type": "string" },
+                    "expiresAt": { "type": "number" },
+                    "isValid": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cloudhub/applications": {
+      "get": {
+        "summary": "Get CloudHub applications",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-anypnt-env-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Environment ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Applications list retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "domain": { "type": "string" },
+                      "status": { "type": "string" },
+                      "workers": { "type": "number" },
+                      "workerType": { "type": "string" },
+                      "muleVersion": { "type": "string" },
+                      "ipAddresses": { 
+                        "type": "array",
+                        "items": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats": {
+      "post": {
+        "summary": "Get Object Store statistics",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-anypnt-env-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Environment ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "startDate": { "type": "string", "format": "date" },
+                  "endDate": { "type": "string", "format": "date" },
+                  "period": { 
+                    "type": "string",
+                    "enum": ["1hour", "1day", "1month"]
+                  }
+                },
+                "required": ["startDate", "endDate", "period"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "timeStamp": { "type": "string", "format": "date-time" },
+                      "objectStoreRequestCount": { "type": "number" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/objectstore": {
+      "get": {
+        "summary": "Get stores list",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-anypnt-env-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startDate",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "endDate",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["1hour", "1day", "1month"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stores list retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/objectstore/{storeId}": {
+      "get": {
+        "summary": "Get store usage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "storeId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-anypnt-env-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startDate",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "endDate",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["1hour", "1day", "1month"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Store usage retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "timeStamp": { "type": "string", "format": "date-time" },
+                      "objectStoreRequestCount": { "type": "number" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/environments": {
+      "get": {
+        "summary": "Get available environments",
+        "responses": {
+          "200": {
+            "description": "Environments list retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "envId": { "type": "string" },
+                      "label": { "type": "string" },
+                      "type": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
