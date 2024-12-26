@@ -8,7 +8,7 @@ A comprehensive monitoring solution for Mulesoft applications and Object Store m
 - Object Store usage statistics
 - Multi-environment support
 - Core utilization tracking
-- Exportable reports
+- Exportable reports (Excel)
 
 ## Project Structure
 
