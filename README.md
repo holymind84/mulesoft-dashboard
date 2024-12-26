@@ -66,17 +66,16 @@ See individual README files in `/backend` and `/frontend` directories for detail
 Contributions welcome! Please read our contributing guidelines before submitting pull requests.
 
 ## Donations
-If you find this project helpful, consider supporting its development:
 
-PayPal
+If you find this project helpful and want to support its continued development:
 
-Supporting this project helps:
+[![PayPal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/SBernardini84)
 
-🚀 Maintain and improve the codebase
-💡 Develop new features
-🐛 Provide faster bug fixes
-📚 Keep documentation up-to-date
-Your support is greatly appreciated and helps keep this project actively maintained!
+Your support helps:
+- 🚀 Maintain and improve the project
+- 💡 Develop new features
+- 🐛 Provide faster bug fixes
+- 📚 Improve documentation
 
 ## License
 
