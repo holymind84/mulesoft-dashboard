@@ -7,12 +7,10 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// Global token variables
 let currentToken = null;
 let tokenError = null;
 let tokenExpirationTime = null;
@@ -21,262 +19,348 @@ let currentCoreToken = null;
 let coreTokenError = null;
 let coreTokenExpirationTime = null;
 
-// Logging function with timestamp
+const getBaseUrl = (region = 'us') => {
+ const urls = {
+   'us': 'https://anypoint.mulesoft.com',
+   'eu1': 'https://eu1.anypoint.mulesoft.com',
+   'gov': 'https://gov.anypoint.mulesoft.com'
+ };
+ return urls[region] || urls.us;
+};
+
 const log = (message) => {
-  const timestamp = new Date().toLocaleString('en-US', {
-    dateStyle: 'short',
-    timeStyle: 'medium'
-  });
-  console.log(`[${timestamp}] ${message}`);
+ const timestamp = new Date().toLocaleString('en-US', {
+   dateStyle: 'short',
+   timeStyle: 'medium'
+ });
+ console.log(`[${timestamp}] ${message}`);
 };
 
-// Error logging
 const logError = (message, error) => {
-  const timestamp = new Date().toLocaleString('en-US', {
-    dateStyle: 'short',
-    timeStyle: 'medium'
-  });
-  console.error(`[${timestamp}] ${message}:`, error);
+ const timestamp = new Date().toLocaleString('en-US', {
+   dateStyle: 'short',
+   timeStyle: 'medium'
+ });
+ console.error(`[${timestamp}] ${message}:`, error);
 };
 
-// Get standard token
 const getToken = async () => {
-  try {
-    if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
-      throw new Error('Missing standard credentials in .env file');
-    }
+ try {
+   if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
+     throw new Error('Missing standard credentials in .env file');
+   }
 
-    log('Requesting new standard token...');
-    const response = await axios.post(
-      'https://anypoint.mulesoft.com/accounts/api/v2/oauth2/token',
-      {
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET,
-        grant_type: 'client_credentials'
-      }
-    );
+   const baseUrl = getBaseUrl(process.env.REGION);
+   log('Requesting new standard token...');
+   const response = await axios.post(
+     `${baseUrl}/accounts/api/v2/oauth2/token`,
+     {
+       client_id: process.env.CLIENT_ID,
+       client_secret: process.env.CLIENT_SECRET,
+       grant_type: 'client_credentials'
+     }
+   );
 
-    currentToken = response.data;
-    tokenError = null;
-    tokenExpirationTime = Date.now() + (response.data.expires_in * 1000);
-    
-    log('Standard token obtained successfully');
-    return response.data;
-  } catch (error) {
-    tokenError = error.response?.data || error.message;
-    logError('Error getting standard token', tokenError);
-    throw error;
-  }
+   currentToken = response.data;
+   tokenError = null;
+   tokenExpirationTime = Date.now() + (response.data.expires_in * 1000);
+   
+   log('Standard token obtained successfully');
+   return response.data;
+ } catch (error) {
+   tokenError = error.response?.data || error.message;
+   logError('Error getting standard token', tokenError);
+   throw error;
+ }
 };
 
-// Get core token
 const getCoreToken = async () => {
-  try {
-    if (!process.env.CORE_CLIENT_ID || !process.env.CORE_CLIENT_SECRET) {
-      throw new Error('Missing core credentials in .env file');
-    }
+ try {
+   if (!process.env.CORE_CLIENT_ID || !process.env.CORE_CLIENT_SECRET) {
+     throw new Error('Missing core credentials in .env file');
+   }
 
-    log('Requesting new core token...');
-    const response = await axios.post(
-      'https://anypoint.mulesoft.com/accounts/api/v2/oauth2/token',
-      {
-        client_id: process.env.CORE_CLIENT_ID,
-        client_secret: process.env.CORE_CLIENT_SECRET,
-        grant_type: 'client_credentials'
-      }
-    );
+   const baseUrl = getBaseUrl(process.env.REGION);
+   log('Requesting new core token...');
+   const response = await axios.post(
+     `${baseUrl}/accounts/api/v2/oauth2/token`,
+     {
+       client_id: process.env.CORE_CLIENT_ID,
+       client_secret: process.env.CORE_CLIENT_SECRET,
+       grant_type: 'client_credentials'
+     }
+   );
 
-    currentCoreToken = response.data;
-    coreTokenError = null;
-    coreTokenExpirationTime = Date.now() + (response.data.expires_in * 1000);
-    
-    log('Core token obtained successfully');
-    return response.data;
-  } catch (error) {
-    coreTokenError = error.response?.data || error.message;
-    logError('Error getting core token', coreTokenError);
-    throw error;
-  }
+   currentCoreToken = response.data;
+   coreTokenError = null;
+   coreTokenExpirationTime = Date.now() + (response.data.expires_in * 1000);
+   
+   log('Core token obtained successfully');
+   return response.data;
+ } catch (error) {
+   coreTokenError = error.response?.data || error.message;
+   logError('Error getting core token', coreTokenError);
+   throw error;
+ }
 };
 
-// Check and renew standard token if needed
 const ensureValidToken = async () => {
-  if (!currentToken || Date.now() >= tokenExpirationTime) {
-    log('Token invalid or expired, requesting new token...');
-    await getToken();
-  }
-  return currentToken;
+ if (!currentToken || Date.now() >= tokenExpirationTime) {
+   log('Token invalid or expired, requesting new token...');
+   await getToken();
+ }
+ return currentToken;
 };
 
-// Check and renew core token if needed
 const ensureValidCoreToken = async () => {
-  if (!currentCoreToken || Date.now() >= coreTokenExpirationTime) {
-    log('Core token invalid or expired, requesting new token...');
-    await getCoreToken();
-  }
-  return currentCoreToken;
+ if (!currentCoreToken || Date.now() >= coreTokenExpirationTime) {
+   log('Core token invalid or expired, requesting new token...');
+   await getCoreToken();
+ }
+ return currentCoreToken;
 };
 
-// Format date to OffsetDateTime
 const formatToOffsetDateTime = (dateString) => {
-  return `${dateString}T00:00:00Z`;
+ return `${dateString}T00:00:00Z`;
 };
 
-// Get standard token status endpoint
+const handleError = async (error, res) => {
+ logError('Error retrieving applications', error.response?.data || error.message);
+ 
+ if (error.response?.status === 401) {
+   try {
+     await getCoreToken();
+     res.status(401).json({ 
+       error: 'Token expired, please retry', 
+       shouldRetry: true 
+     });
+   } catch (tokenError) {
+     res.status(401).json({ 
+       error: 'Authentication error', 
+       details: tokenError.message 
+     });
+   }
+ } else {
+   res.status(error.response?.status || 500).json({
+     error: error.response?.data || error.message,
+     timestamp: new Date().toISOString()
+   });
+ }
+};
+
+const fetchCloudHub1Apps = async (environmentId) => {
+ try {
+   const baseUrl = getBaseUrl(process.env.REGION);
+   const response = await axios.get(`${baseUrl}/cloudhub/api/applications`, {
+     headers: {
+       'Authorization': `Bearer ${currentCoreToken.access_token}`,
+       'x-anypnt-org-id': process.env.ORGANIZATION_ID,
+       'x-anypnt-env-id': environmentId
+     }
+   });
+   return response.data.map(app => ({ ...app, platform: 'CloudHub' }));
+ } catch (error) {
+   if (error.response?.status === 404) {
+     log('No CloudHub 1.0 applications found in this environment');
+     return [];
+   }
+   throw error;
+ }
+};
+
+const fetchCloudHub2Apps = async (environmentId) => {
+ try {
+   const baseUrl = getBaseUrl(process.env.REGION);
+   const endpoint = `${baseUrl}/amc/application-manager/api/v2/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}/deployments`;
+   
+   const deploymentsResponse = await axios.get(endpoint, {
+     headers: {
+       'Authorization': `Bearer ${currentCoreToken.access_token}`
+     }
+   });
+
+   if (!deploymentsResponse.data.items?.length) {
+     return [];
+   }
+
+   const appsWithDetails = await Promise.all(
+     deploymentsResponse.data.items.map(async (app) => {
+       try {
+         const detailsResponse = await axios.get(
+           `${baseUrl}/amc/application-manager/api/v2/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}/deployments/${app.id}`,
+           {
+             headers: {
+               'Authorization': `Bearer ${currentCoreToken.access_token}`
+             }
+           }
+         );
+
+         const details = detailsResponse.data;
+         return {
+           domain: app.name,
+           status: app.application?.status || 'UNKNOWN',
+           workers: details.target?.replicas || 1,
+           workerType: details.application?.vCores || 'vCore',
+           muleVersion: app.currentRuntimeVersion,
+           platform: 'CloudHub 2.0',
+           targetId: app.target.targetId
+         };
+       } catch (error) {
+         log(`Error fetching details for deployment ${app.id}: ${error.message}`);
+         return null;
+       }
+     })
+   );
+
+   return appsWithDetails.filter(app => app !== null);
+ } catch (error) {
+   if (error.response?.status === 404) {
+     log('No CloudHub 2.0 environments available');
+     return [];
+   }
+   throw error;
+ }
+};
+
+// API Endpoints
 app.get('/api/token/status', (req, res) => {
-  if (tokenError) {
-    res.status(500).json({ error: tokenError });
-  } else if (currentToken) {
-    res.json({
-      ...currentToken,
-      expiresAt: tokenExpirationTime,
-      isValid: Date.now() < tokenExpirationTime
-    });
-  } else {
-    res.status(404).json({ message: 'Token not yet available' });
-  }
+ if (tokenError) {
+   res.status(500).json({ error: tokenError });
+ } else if (currentToken) {
+   res.json({
+     ...currentToken,
+     expiresAt: tokenExpirationTime,
+     isValid: Date.now() < tokenExpirationTime
+   });
+ } else {
+   res.status(404).json({ message: 'Token not yet available' });
+ }
 });
 
-// Get core token status endpoint
 app.get('/api/token/core/status', (req, res) => {
-  if (coreTokenError) {
-    res.status(500).json({ error: coreTokenError });
-  } else if (currentCoreToken) {
-    res.json({
-      ...currentCoreToken,
-      expiresAt: coreTokenExpirationTime,
-      isValid: Date.now() < coreTokenExpirationTime
-    });
-  } else {
-    res.status(404).json({ message: 'Core token not yet available' });
-  }
+ if (coreTokenError) {
+   res.status(500).json({ error: coreTokenError });
+ } else if (currentCoreToken) {
+   res.json({
+     ...currentCoreToken,
+     expiresAt: coreTokenExpirationTime,
+     isValid: Date.now() < coreTokenExpirationTime
+   });
+ } else {
+   res.status(404).json({ message: 'Core token not yet available' });
+ }
 });
 
-// Statistics endpoint
-app.post('/api/stats', async (req, res) => {
-  try {
-    await ensureValidToken();
-    
-    const { startDate, endDate, period } = req.body;
-    const environmentId = req.headers['x-anypnt-env-id'];
-
-    if (!process.env.ORGANIZATION_ID) {
-      throw new Error('Missing ORGANIZATION_ID in environment variables');
-    }
-
-    if (!environmentId) {
-      throw new Error('Environment ID not specified');
-    }
-
-    if (!startDate || !endDate || !period) {
-      throw new Error('Missing parameters');
-    }
-
-    const formattedStartDate = formatToOffsetDateTime(startDate);
-    const formattedEndDate = formatToOffsetDateTime(endDate);
-
-    log(`Requesting statistics for org ${process.env.ORGANIZATION_ID} from ${formattedStartDate} to ${formattedEndDate}`);
-
-    const response = await axios.get(
-      `https://object-store-stats.anypoint.mulesoft.com/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}`,
-      {
-        params: {
-          startDate: formattedStartDate,
-          endDate: formattedEndDate,
-          period,
-          isMaster: false
-        },
-        headers: {
-          'Authorization': `Bearer ${currentToken.access_token}`
-        }
-      }
-    );
-
-    log('Statistics obtained successfully');
-    res.json(response.data);
-
-  } catch (error) {
-    logError('Error in stats request', error.response?.data || error.message);
-    
-    if (error.response?.status === 401) {
-      try {
-        await getToken();
-        res.status(401).json({ 
-          error: 'Token expired, please retry', 
-          shouldRetry: true 
-        });
-      } catch (tokenError) {
-        res.status(401).json({ 
-          error: 'Authentication error', 
-          details: tokenError.message 
-        });
-      }
-    } else {
-      res.status(error.response?.status || 500).json({
-        error: error.response?.data || error.message,
-        timestamp: new Date().toISOString()
-      });
-    }
-  }
-});
-
-// CloudHub applications endpoint
 app.get('/api/cloudhub/applications', async (req, res) => {
-  try {
-    await ensureValidCoreToken();
-    
-    const environmentId = req.headers['x-anypnt-env-id'];
-    
-    if (!environmentId) {
-      return res.status(400).json({ error: 'Environment ID not specified' });
-    }
+ try {
+   await ensureValidCoreToken();
+   const environmentId = req.headers['x-anypnt-env-id'];
+   
+   if (!environmentId || !process.env.ORGANIZATION_ID) {
+     return res.status(400).json({ error: 'Missing required parameters' });
+   }
 
-    if (!process.env.ORGANIZATION_ID) {
-      return res.status(500).json({ error: 'Organization ID not configured' });
-    }
-    
-    log('Requesting CloudHub applications list');
+   let ch1Apps = [], ch2Apps = [];
+   let errors = [];
+   
+   try {
+     ch1Apps = await fetchCloudHub1Apps(environmentId);
+   } catch (error) {
+     errors.push({ platform: 'CloudHub', error: error.message });
+     log('Error fetching CloudHub 1.0 apps: ' + error.message);
+   }
 
-    const response = await axios.get(
-      'https://anypoint.mulesoft.com/cloudhub/api/applications',
-      {
-        headers: {
-          'Authorization': `Bearer ${currentCoreToken.access_token}`,
-          'x-anypnt-org-id': process.env.ORGANIZATION_ID,
-          'x-anypnt-env-id': environmentId
-        }
-      }
-    );
+   try {
+     ch2Apps = await fetchCloudHub2Apps(environmentId);
+   } catch (error) {
+     errors.push({ platform: 'CloudHub 2.0', error: error.message });
+     log('Error fetching CloudHub 2.0 apps: ' + error.message);
+   }
 
-    log('CloudHub applications list obtained successfully');
-    res.json(response.data);
+   const apps = [...ch1Apps, ...ch2Apps];
+   
+   if (apps.length === 0 && errors.length > 0) {
+     return res.status(500).json({ 
+       error: 'Failed to fetch applications', 
+       details: errors 
+     });
+   }
 
-  } catch (error) {
-    logError('Error retrieving CloudHub applications', error.response?.data || error.message);
-    
-    if (error.response?.status === 401) {
-      try {
-        await getCoreToken();
-        res.status(401).json({ 
-          error: 'Token expired, please retry', 
-          shouldRetry: true 
-        });
-      } catch (tokenError) {
-        res.status(401).json({ 
-          error: 'Authentication error', 
-          details: tokenError.message 
-        });
-      }
-    } else {
-      res.status(error.response?.status || 500).json({
-        error: error.response?.data || error.message,
-        timestamp: new Date().toISOString()
-      });
-    }
-  }
+   res.json(apps);
+
+ } catch (error) {
+   handleError(error, res);
+ }
 });
 
-// Get stores list endpoint
+app.post('/api/stats', async (req, res) => {
+ try {
+   await ensureValidToken();
+   
+   const { startDate, endDate, period } = req.body;
+   const environmentId = req.headers['x-anypnt-env-id'];
+   const baseUrl = getBaseUrl(process.env.REGION);
+
+   if (!process.env.ORGANIZATION_ID) {
+     throw new Error('Missing ORGANIZATION_ID in environment variables');
+   }
+
+   if (!environmentId) {
+     throw new Error('Environment ID not specified');
+   }
+
+   if (!startDate || !endDate || !period) {
+     throw new Error('Missing parameters');
+   }
+
+   const formattedStartDate = formatToOffsetDateTime(startDate);
+   const formattedEndDate = formatToOffsetDateTime(endDate);
+
+   log(`Requesting statistics for org ${process.env.ORGANIZATION_ID} from ${formattedStartDate} to ${formattedEndDate}`);
+
+   const response = await axios.get(
+     `https://object-store-stats.anypoint.mulesoft.com/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}`,
+     {
+       params: {
+         startDate: formattedStartDate,
+         endDate: formattedEndDate,
+         period,
+         isMaster: false
+       },
+       headers: {
+         'Authorization': `Bearer ${currentToken.access_token}`
+       }
+     }
+   );
+
+   log('Statistics obtained successfully');
+   res.json(response.data);
+
+ } catch (error) {
+   logError('Error in stats request', error.response?.data || error.message);
+   
+   if (error.response?.status === 401) {
+     try {
+       await getToken();
+       res.status(401).json({ 
+         error: 'Token expired, please retry', 
+         shouldRetry: true 
+       });
+     } catch (tokenError) {
+       res.status(401).json({ 
+         error: 'Authentication error', 
+         details: tokenError.message 
+       });
+     }
+   } else {
+     res.status(error.response?.status || 500).json({
+       error: error.response?.data || error.message,
+       timestamp: new Date().toISOString()
+     });
+   }
+ }
+});
+
 app.get('/api/objectstore', async (req, res) => {
   try {
     log('Received /api/objectstore request');
@@ -323,7 +407,6 @@ app.get('/api/objectstore', async (req, res) => {
   }
 });
 
-// Get store usage endpoint
 app.get('/api/objectstore/:storeId', async (req, res) => {
   try {
     log('Received /api/objectstore/:storeId request');
@@ -371,7 +454,7 @@ app.get('/api/objectstore/:storeId', async (req, res) => {
   }
 });
 
-// Get environments endpoint
+
 app.get('/api/environments', async (req, res) => {
   try {
     await ensureValidCoreToken();
@@ -389,7 +472,6 @@ app.get('/api/environments', async (req, res) => {
       }
     );
 
-    // Split environments into production and non-production
     const productionEnvs = [];
     const otherEnvs = [];
 
@@ -407,11 +489,9 @@ app.get('/api/environments', async (req, res) => {
       }
     });
 
-    // Sort each array by name
     productionEnvs.sort((a, b) => a.label.localeCompare(b.label));
     otherEnvs.sort((a, b) => a.label.localeCompare(b.label));
 
-    // Combine arrays with production first
     const environments = [...productionEnvs, ...otherEnvs];
 
     res.json(environments);
@@ -441,7 +521,6 @@ app.get('/api/environments', async (req, res) => {
   }
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'UP',
@@ -449,7 +528,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Server startup
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
   log(`Server running on port ${PORT}`);
