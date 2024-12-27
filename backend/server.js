@@ -528,9 +528,11 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Server startup
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
   log(`Server running on port ${PORT}`);
+  log(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
   try {
     log('Getting initial tokens...');
     await Promise.all([getToken(), getCoreToken()]);
