@@ -44,6 +44,8 @@ cd mulesoft-dashboard
 2. Start the backend server
 ```bash
 cd backend
+cp .env.example .env
+# Edit .env with your Mulesoft credentials - See Backend README
 npm install
 npm start
 ```
