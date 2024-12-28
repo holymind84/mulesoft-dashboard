@@ -2,10 +2,10 @@ const getosv2_url = (region) => {
    const mappings = {
        
 	   //US
-	   'us-e1': 'us-east-1',
-       'us-e2': 'us-east-2',
-       'us-w1': 'us-west-1',
-	   'us-w2': 'us-west-2',
+	   'us-e1': 'us-east-1',	//US East (N. Virginia)
+       'us-e2': 'us-east-2',	//US East (Ohio)
+       'us-w1': 'us-west-1',	//US West (N. California)
+	   'us-w2': 'us-west-2',	//US West (Oregon)
 	   'sg-s1': 'ap-southeast-1', //Asia Pacific (Singapore)
 	   'au-s1': 'ap-southeast-2', //Asia Pacific (Sydney)
 	   'jp-e1': 'ap-northeast-1', //Asia Pacific (Tokyo)
@@ -16,7 +16,7 @@ const getosv2_url = (region) => {
 	   'br-s1': 'sa-east-1',      //South America (Sao Paulo)
 	   
 	    //US GOV
-	   'usg-w1.gov': 'us-gov-west-1',
+	   'usg-w1.gov': 'us-gov-west-1',	//GovCloud (US West)
 	   
 	   //EU
 	   'de-c1.eu1': 'eu-central-1', //Europe (Frankfurt)  
