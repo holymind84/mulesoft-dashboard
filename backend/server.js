@@ -358,161 +358,178 @@ app.post('/api/stats', async (req, res) => {
 });
 
 app.get('/api/objectstore', async (req, res) => {
- try {
-   log('=== Object Store List Request ===');
-   await ensureValidToken();
-   
-   const { startDate, endDate, period } = req.query;
-   const environmentId = req.headers['x-anypnt-env-id'];
-   const baseUrl = getBaseUrl(process.env.REGION);
+  try {
+    log('=== Object Store List Request ===');
+    await ensureValidToken();
+    
+    const { startDate, endDate, period } = req.query;
+    const environmentId = req.headers['x-anypnt-env-id'];
+    const baseUrl = getBaseUrl(process.env.REGION);
+ 
+    // Get available regions first
+    log('=== Region Info Request ===');
+    const regionEndpoint = `${baseUrl}/armui/api/v1/applications`;
+    log(`Endpoint: GET ${regionEndpoint}`);
+    
+    try {
+        const regionResponse = await axios.get(regionEndpoint, {
+            headers: {
+                'Authorization': `Bearer ${currentCoreToken.access_token}`,
+                'X-ANYPNT-ENV-ID': environmentId,
+                'X-ANYPNT-ORG-ID': process.env.ORGANIZATION_ID
+            }
+        });
+ 
+        const responseData = regionResponse.data;
+        
+        if (responseData?.data) {
+            const regions = [];
+ 
+            responseData.data.forEach(item => {
+                const cloudInfo = item.target.type === 'MC' ? 
+                    extractCloudHub2Region(item.target?.id) : 
+                    getosv2_url(extractRegion(item?.details?.domain)); 
+                
+                log('Calculated cloudInfo: ' + cloudInfo);
+                if (cloudInfo) regions.push(cloudInfo);
+            });
+ 
+            const distinctRegions = [...new Set(regions)];
+            log('Regions array: ' + JSON.stringify(regions));
+            log('Distinct Regions: ' + JSON.stringify(distinctRegions));
+ 
+            if (!environmentId) {
+                throw new Error('Environment ID not specified');
+            }
+ 
+            if (!startDate || !endDate || !period) {
+                throw new Error('Missing parameters');
+            }
+ 
+            const formattedStartDate = formatToOffsetDateTime(startDate);
+            const formattedEndDate = formatToOffsetDateTime(endDate);
+ 
+            // Query each region for stores
+            const storePromises = distinctRegions.map(async region => {
+                const endpoint = `https://object-store-stats.anypoint.mulesoft.com/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}/regions/${region}/stores`;
+                
+                log(`Making request to region ${region}: ${endpoint}`);
+                
+                try {
+                    const response = await axios.get(endpoint, {
+                        params: {
+                            startDate: formattedStartDate,
+                            endDate: formattedEndDate,
+                            period
+                        },
+                        headers: {
+                            'Authorization': `Bearer ${currentToken.access_token}`
+                        }
+                    });
+ 
+                    log(`Raw response from region ${region}: ${JSON.stringify(response.data)}`);
+                    
+                    const regionStores = response.data || [];
+                    log(`Processed stores for region ${region}: ${JSON.stringify(regionStores)}`);
+                    
+                    const storesWithRegion = regionStores.map(store => ({
+                        name: store,
+                        region: region
+                    }));
+ 
+                    log(`Formatted stores for region ${region}: ${JSON.stringify(storesWithRegion)}`);
+                    return storesWithRegion;
+ 
+                } catch (error) {
+                    log(`Error fetching stores for region ${region}: ${error.message}`);
+                    return [];
+                }
+            });
+ 
+            const storesResults = await Promise.all(storePromises);
+            log(`Stores Results before flat: ${JSON.stringify(storesResults)}`);
+            
+            const allStores = storesResults.flat();
+            log(`All Stores after flat: ${JSON.stringify(allStores)}`);
+ 
+            res.json(allStores);
+        }
+ 
+    } catch (error) {
+        log('Error Message:', error.message);
+        if (error.response) {
+            log('Error Status:', error.response.status);
+            log('Error Headers:', JSON.stringify(error.response.headers, null, 2));
+            log('Error Data:', JSON.stringify(error.response.data, null, 2));
+        }
+        handleError(error, res);
+    }
+ 
+  } catch (error) {
+    logError('Error retrieving stores', error.response?.data || error.message);
+    handleError(error, res);
+  }
+ });
 
-   // Log dettagliato della chiamata per le informazioni sulla regione
-   log('=== Region Info Request ===');
-   const regionEndpoint = `${baseUrl}/armui/api/v1/applications`;
-   log(`Endpoint: GET ${regionEndpoint}`);
-   
-
-   try {
-       const regionResponse = await axios.get(regionEndpoint, {
-           headers: {
-               'Authorization': `Bearer ${currentCoreToken.access_token}`,
-               'X-ANYPNT-ENV-ID': environmentId,
-               'X-ANYPNT-ORG-ID': process.env.ORGANIZATION_ID
-           }
-       });
-
-       const responseData = regionResponse.data;
-       
-       if (responseData?.data) {
-           const regions = [];
-
-           responseData.data.forEach(item => {
-               const cloudInfo = item.target.type === 'MC' ? 
-                   extractCloudHub2Region(item.target?.id) : 
-                   getosv2_url(extractRegion(item?.details?.domain)); 
-               
-               //log('Calculated cloudInfo: ' + cloudInfo);
-               if (cloudInfo) regions.push(cloudInfo);
-           });
-
-           const distinctRegions = [...new Set(regions)];
-           //log('Regions array: ' + JSON.stringify(regions));
-           log('Distinct Regions: ' + JSON.stringify(distinctRegions));
-
-           if (!environmentId) {
-               throw new Error('Environment ID not specified');
-           }
-
-           if (!startDate || !endDate || !period) {
-               throw new Error('Missing parameters');
-           }
-
-           const formattedStartDate = formatToOffsetDateTime(startDate);
-           const formattedEndDate = formatToOffsetDateTime(endDate);
-
-           let allStores = [];
-
-           try {
-               const storePromises = distinctRegions.map(region => 
-                   axios.get(
-                       `https://object-store-stats.anypoint.mulesoft.com/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}/regions/${region}/stores`,
-                       {
-                           params: {
-                               startDate: formattedStartDate,
-                               endDate: formattedEndDate,
-                               period
-                           },
-                           headers: {
-                               'Authorization': `Bearer ${currentToken.access_token}`
-                           }
-                       }
-                   )
-               );
-
-               const responses = await Promise.all(storePromises);
-               
-               responses.forEach((response, index) => {
-                   const regionStores = response.data;
-                   log(`Stores found in region ${distinctRegions[index]}: ${JSON.stringify(regionStores)}`);
-                   allStores = allStores.concat(regionStores);
-               });
-
-               log('All stores combined: ' + JSON.stringify(allStores));
-               res.json(allStores);
-
-           } catch (error) {
-               logError('Error retrieving stores from regions', error);
-               handleError(error, res);
-           }
-       }
-
-   } catch (error) {
-       log('Error Message:', error.message);
-       if (error.response) {
-           log('Error Status:', error.response.status);
-           log('Error Headers:', JSON.stringify(error.response.headers, null, 2));
-           log('Error Data:', JSON.stringify(error.response.data, null, 2));
-       }
-   }
-
- } catch (error) {
-   logError('Error retrieving stores', error.response?.data || error.message);
-   handleError(error, res);
- }
-});
 
 app.get('/api/objectstore/:storeId', async (req, res) => {
   try {
-    log('=== Object Store Details Request ===');
+    log('=== Object Store Store Details Request ===');
     await ensureValidToken();
     
     const { storeId } = req.params;
     const { startDate, endDate, period } = req.query;
     const environmentId = req.headers['x-anypnt-env-id'];
-    const region = req.headers['x-anypnt-region'];  // Nuovo header per la regione
-
+    const region = req.headers['x-anypnt-region'];
+ 
+    log('Request Parameters:');
+    log(`Store ID: ${storeId}`);
+    log(`Environment ID: ${environmentId}`);
+    log(`Region: ${region}`);
+    log(`Start Date: ${startDate}`);
+    log(`End Date: ${endDate}`);
+    log(`Period: ${period}`);
+ 
     if (!environmentId) {
       throw new Error('Environment ID not specified');
     }
-
+ 
     if (!region) {
       throw new Error('Region not specified');
     }
-
+ 
     if (!storeId || !startDate || !endDate || !period) {
       throw new Error('Missing parameters');
     }
-
-    log(`Fetching store details for:
-      Store ID: ${storeId}
-      Region: ${region}
-      Environment: ${environmentId}
-    `);
-
+ 
     const formattedStartDate = formatToOffsetDateTime(startDate);
     const formattedEndDate = formatToOffsetDateTime(endDate);
-
-    const response = await axios.get(
-      `https://object-store-stats.anypoint.mulesoft.com/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}/regions/${region}/stores/${storeId}`,
-      {
-        params: {
-          startDate: formattedStartDate,
-          endDate: formattedEndDate,
-          period
-        },
-        headers: {
-          'Authorization': `Bearer ${currentToken.access_token}`
-        }
+ 
+    const endpoint = `https://object-store-stats.anypoint.mulesoft.com/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}/regions/${region}/stores/${storeId}`;
+    
+    log(`Making request to: ${endpoint}`);
+ 
+    const response = await axios.get(endpoint, {
+      params: {
+        startDate: formattedStartDate,
+        endDate: formattedEndDate,
+        period
+      },
+      headers: {
+        'Authorization': `Bearer ${currentToken.access_token}`
       }
-    );
-
+    });
+ 
     log('Store details obtained successfully');
     res.json(response.data);
   } catch (error) {
     logError('Error retrieving store', error.response?.data || error.message);
     handleError(error, res);
   }
-});
+ });
+
+
+
 app.get('/api/environments', async (req, res) => {
   try {
     await ensureValidCoreToken();
