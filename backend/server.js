@@ -29,6 +29,10 @@ const getBaseUrl = (region = 'us') => {
  return urls[region] || urls.us;
 };
 
+const getBaseUrlWithoutProtocol = (region = 'us') => {
+  const fullUrl = getBaseUrl(region);
+  return fullUrl.replace('https://', '');
+};
 
 
 const log = (message) => {
@@ -307,8 +311,8 @@ app.post('/api/stats', async (req, res) => {
     
     const { startDate, endDate, period } = req.body;
     const environmentId = req.headers['x-anypnt-env-id'];
-
-    const endpoint = `https://object-store-stats.anypoint.mulesoft.com/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}`;
+    const baseUrlNoProtocol=getBaseUrlWithoutProtocol(process.env.CONTROL_PLANE);
+    const endpoint = `https://object-store-stats.${baseUrlNoProtocol}/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}`;
     
     log(`Endpoint: POST /api/stats`);
     log(`URL: ${endpoint}`);
@@ -359,7 +363,7 @@ app.post('/api/stats', async (req, res) => {
 
 app.get('/api/objectstore', async (req, res) => {
   try {
-    log('=== Object Store List Request ===');
+    //log('=== Object Store List Request ===');
     await ensureValidToken();
     
     const { startDate, endDate, period } = req.query;
@@ -367,9 +371,9 @@ app.get('/api/objectstore', async (req, res) => {
     const baseUrl = getBaseUrl(process.env.REGION);
  
     // Get available regions first
-    log('=== Region Info Request ===');
+    //log('=== Region Info Request ===');
     const regionEndpoint = `${baseUrl}/armui/api/v1/applications`;
-    log(`Endpoint: GET ${regionEndpoint}`);
+    //log(`Endpoint: GET ${regionEndpoint}`);
     
     try {
         const regionResponse = await axios.get(regionEndpoint, {
@@ -390,13 +394,13 @@ app.get('/api/objectstore', async (req, res) => {
                     extractCloudHub2Region(item.target?.id) : 
                     getosv2_url(extractRegion(item?.details?.domain)); 
                 
-                log('Calculated cloudInfo: ' + cloudInfo);
+                //log('Calculated cloudInfo: ' + cloudInfo);
                 if (cloudInfo) regions.push(cloudInfo);
             });
  
             const distinctRegions = [...new Set(regions)];
-            log('Regions array: ' + JSON.stringify(regions));
-            log('Distinct Regions: ' + JSON.stringify(distinctRegions));
+            //log('Regions array: ' + JSON.stringify(regions));
+            //log('Distinct Regions: ' + JSON.stringify(distinctRegions));
  
             if (!environmentId) {
                 throw new Error('Environment ID not specified');
@@ -411,33 +415,40 @@ app.get('/api/objectstore', async (req, res) => {
  
             // Query each region for stores
             const storePromises = distinctRegions.map(async region => {
-                const endpoint = `https://object-store-stats.anypoint.mulesoft.com/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}/regions/${region}/stores`;
+                //old endpoint 
+                //const endpoint = `https://object-store-stats.anypoint.mulesoft.com/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}/regions/${region}/stores`;
+                //example object-store-us-east-1.anypoint.mulesoft.com
                 
-                log(`Making request to region ${region}: ${endpoint}`);
+                const baseUrlNoProtocol=getBaseUrlWithoutProtocol(process.env.CONTROL_PLANE);
+                
+                const endpoint = `https://object-store-${region}.${baseUrlNoProtocol}/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}/stores`;
+                //probably here I have to invoke this instead->
+                //{{osv2_url}}/api/v1/organizations/<org>/environments/<env>/stores
+                //i DON'T NEED ANY START DATE OR ENDDATE OR PERIOD
+
+
+                
+                //log(`Making request to region ${region}: ${endpoint}`);
                 
                 try {
                     const response = await axios.get(endpoint, {
-                        params: {
-                            startDate: formattedStartDate,
-                            endDate: formattedEndDate,
-                            period
-                        },
+                        
                         headers: {
                             'Authorization': `Bearer ${currentToken.access_token}`
                         }
                     });
  
-                    log(`Raw response from region ${region}: ${JSON.stringify(response.data)}`);
+                    //log(`Raw response from region ${region}: ${JSON.stringify(response.data)}`);
                     
-                    const regionStores = response.data || [];
-                    log(`Processed stores for region ${region}: ${JSON.stringify(regionStores)}`);
+                    const regionStores = response.data.values || [];
+                    //log(`Processed stores for region ${region}: ${JSON.stringify(regionStores)}`);
                     
                     const storesWithRegion = regionStores.map(store => ({
-                        name: store,
+                        name: store.storeId,
                         region: region
                     }));
  
-                    log(`Formatted stores for region ${region}: ${JSON.stringify(storesWithRegion)}`);
+                    //log(`Formatted stores for region ${region}: ${JSON.stringify(storesWithRegion)}`);
                     return storesWithRegion;
  
                 } catch (error) {
@@ -447,10 +458,10 @@ app.get('/api/objectstore', async (req, res) => {
             });
  
             const storesResults = await Promise.all(storePromises);
-            log(`Stores Results before flat: ${JSON.stringify(storesResults)}`);
+            //log(`Stores Results before flat: ${JSON.stringify(storesResults)}`);
             
             const allStores = storesResults.flat();
-            log(`All Stores after flat: ${JSON.stringify(allStores)}`);
+            //log(`All Stores after flat: ${JSON.stringify(allStores)}`);
  
             res.json(allStores);
         }
@@ -474,7 +485,7 @@ app.get('/api/objectstore', async (req, res) => {
 
 app.get('/api/objectstore/:storeId', async (req, res) => {
   try {
-    log('=== Object Store Store Details Request ===');
+    //log('=== Object Store Store Details Request ===');
     await ensureValidToken();
     
     const { storeId } = req.params;
@@ -482,13 +493,13 @@ app.get('/api/objectstore/:storeId', async (req, res) => {
     const environmentId = req.headers['x-anypnt-env-id'];
     const region = req.headers['x-anypnt-region'];
  
-    log('Request Parameters:');
-    log(`Store ID: ${storeId}`);
-    log(`Environment ID: ${environmentId}`);
-    log(`Region: ${region}`);
-    log(`Start Date: ${startDate}`);
-    log(`End Date: ${endDate}`);
-    log(`Period: ${period}`);
+    //log('Request Parameters:');
+    //log(`Store ID: ${storeId}`);
+    //log(`Environment ID: ${environmentId}`);
+    //log(`Region: ${region}`);
+    //log(`Start Date: ${startDate}`);
+    //log(`End Date: ${endDate}`);
+    //log(`Period: ${period}`);
  
     if (!environmentId) {
       throw new Error('Environment ID not specified');
@@ -504,10 +515,12 @@ app.get('/api/objectstore/:storeId', async (req, res) => {
  
     const formattedStartDate = formatToOffsetDateTime(startDate);
     const formattedEndDate = formatToOffsetDateTime(endDate);
- 
-    const endpoint = `https://object-store-stats.anypoint.mulesoft.com/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}/regions/${region}/stores/${storeId}`;
     
-    log(`Making request to: ${endpoint}`);
+
+    const baseUrlNoProtocol=getBaseUrlWithoutProtocol(process.env.CONTROL_PLANE);
+    const endpoint = `https://object-store-stats.${baseUrlNoProtocol}/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}/regions/${region}/stores/${storeId}`;
+    
+    //log(`Making request to: ${endpoint}`);
  
     const response = await axios.get(endpoint, {
       params: {
@@ -520,7 +533,7 @@ app.get('/api/objectstore/:storeId', async (req, res) => {
       }
     });
  
-    log('Store details obtained successfully');
+    //log('Store details obtained successfully');
     res.json(response.data);
   } catch (error) {
     logError('Error retrieving store', error.response?.data || error.message);
@@ -537,9 +550,9 @@ app.get('/api/environments', async (req, res) => {
     if (!process.env.ORGANIZATION_ID) {
       throw new Error('Organization ID not configured in environment variables');
     }
-    
+    const baseUrlNoProtocol=getBaseUrlWithoutProtocol(process.env.CONTROL_PLANE);
     const response = await axios.get(
-      `https://anypoint.mulesoft.com/accounts/api/organizations/${process.env.ORGANIZATION_ID}/environments`,
+      `https://${baseUrlNoProtocol}/accounts/api/organizations/${process.env.ORGANIZATION_ID}/environments`,
       {
         headers: {
           'Authorization': `Bearer ${currentCoreToken.access_token}`
@@ -548,6 +561,7 @@ app.get('/api/environments', async (req, res) => {
     );
 
     const productionEnvs = [];
+    const sandboxEnvs = [];
     const otherEnvs = [];
 
     response.data.data.forEach(env => {
@@ -559,15 +573,25 @@ app.get('/api/environments', async (req, res) => {
 
       if (env.type === 'production') {
         productionEnvs.push(envData);
-      } else {
+      } else if (env.type === 'sandbox') {
+        sandboxEnvs.push(envData);
+      } else {  // tutti gli altri tipi
         otherEnvs.push(envData);
       }
-    });
-
+     });
+    
+    
     productionEnvs.sort((a, b) => a.label.localeCompare(b.label));
+    sandboxEnvs.sort((a, b) => a.label.localeCompare(b.label));
     otherEnvs.sort((a, b) => a.label.localeCompare(b.label));
 
-    const environments = [...productionEnvs, ...otherEnvs];
+    const environments = [
+      ...productionEnvs, 
+      ...sandboxEnvs,
+      ...otherEnvs
+     ];
+
+
 
     res.json(environments);
 
