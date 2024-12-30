@@ -4,7 +4,7 @@ import '../styles/ByApplication.css';
 
 function ByApplication({ selectedEnv }) {
  const [tokenLoading, setTokenLoading] = useState(true);
- const [setTokenError] = useState(null);
+ const [tokenError,setTokenError] = useState(null);
  const [isAuthenticated, setIsAuthenticated] = useState(false);
  const [availableStores, setAvailableStores] = useState([]);
  const [selectedStore, setSelectedStore] = useState('');
