@@ -4,6 +4,7 @@ import '../styles/ByApplication.css';
 
 function ByApplication({ selectedEnv }) {
  const [tokenLoading, setTokenLoading] = useState(true);
+ // eslint-disable-next-line
  const [tokenError,setTokenError] = useState(null);
  const [isAuthenticated, setIsAuthenticated] = useState(false);
  const [availableStores, setAvailableStores] = useState([]);

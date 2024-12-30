@@ -22,7 +22,11 @@ function Core({ selectedEnv }) {
    const mappings = {
      'MICRO': '0.1',
      'SMALL': '0.2',
-     'MEDIUM': '1'
+     'MEDIUM': '1',
+	 'LARGE': '2',
+	 'XLARGE': '4',
+	 'XXLARGE': '8',
+	 'XXXLARGE': '16'
    };
    return mappings[type?.toUpperCase()] || type;
  }, []);
@@ -92,7 +96,7 @@ function Core({ selectedEnv }) {
      'Platform': app.platform || 'CloudHub',
      'Status': app.status,
      'Workers': app.workers,
-     'Worker Type': mapWorkerType(app.workerType),
+     'Size': mapWorkerType(app.workerType),
      'Total Core': calculateTotalCore(app.workers, app.workerType, app.status, app.platform).toFixed(1),
      'Static IPs': (app.ipAddresses || []).length,
      'Runtime Version': app.muleVersion
@@ -269,7 +273,7 @@ function Core({ selectedEnv }) {
                Workers
              </th>
              <th className="column-workertype sortable" onClick={() => handleSort('workerType')}>
-               Worker Type
+               Size
              </th>
              <th className="column-total sortable" onClick={() => handleSort('totalCore')}>
                Total Core

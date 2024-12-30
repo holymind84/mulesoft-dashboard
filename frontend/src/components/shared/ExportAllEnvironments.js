@@ -50,7 +50,7 @@ const ExportAllEnvironments = ({ mapWorkerType, calculateTotalCore }) => {
             'App': app.domain,
             'Status': app.status.toLowerCase(),
             'Workers': app.workers,
-            'Worker Type': mapWorkerType(app.workerType),
+            'Size': mapWorkerType(app.workerType),
             'Total Core': calculateTotalCore(app.workers, app.workerType, app.status).toFixed(1).replace('.', ','),
             'Static IPs': (app.ipAddresses || []).length,
             'Runtime Version': app.muleVersion

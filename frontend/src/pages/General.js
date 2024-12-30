@@ -15,6 +15,7 @@ function General({ selectedEnv }) {
   };
 
   const [tokenLoading, setTokenLoading] = useState(true);
+   // eslint-disable-next-line
   const [tokenError,setTokenError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
