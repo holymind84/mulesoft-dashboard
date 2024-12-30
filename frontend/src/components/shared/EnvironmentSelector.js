@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+
 
 const EnvironmentSelector = ({ selectedEnv, environments, onEnvironmentChange }) => {
   useEffect(() => {

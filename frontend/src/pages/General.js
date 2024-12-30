@@ -15,7 +15,7 @@ function General({ selectedEnv }) {
   };
 
   const [tokenLoading, setTokenLoading] = useState(true);
-  const [tokenError, setTokenError] = useState(null);
+  const [setTokenError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   const [statsForm, setStatsForm] = useState({
