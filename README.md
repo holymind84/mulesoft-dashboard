@@ -1,10 +1,11 @@
-# Mulesoft Dashboard
+# MuleSoft Dashboard
 
-A comprehensive monitoring solution for Mulesoft applications and Object Store metrics.
+A comprehensive monitoring solution for MuleSoft applications and Object Store metrics.
 
 ## Features
 
 - Real-time CloudHub application monitoring
+- Support CloudHub 1.0 and CloudHub 2.0
 - Object Store usage statistics
 - Multi-environment support
 - Core utilization tracking
@@ -45,7 +46,7 @@ cd mulesoft-dashboard
 ```bash
 cd backend
 cp .env.example .env
-# Edit .env with your Mulesoft credentials - See Backend README
+# Edit .env with your MuleSoft credentials - See Backend README
 npm install
 npm start
 ```
