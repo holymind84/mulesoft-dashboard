@@ -18,7 +18,7 @@ export default defineConfig({
   server: {
     // Opzionale: imposta la porta di sviluppo a 3000, la stessa usata di default da CRA
     port: 3000, 
-    
+    open: true,
     // Configura il proxy per inoltrare le chiamate API ed evitare errori CORS
     proxy: {
       // Tutte le richieste che iniziano con '/api' verranno reindirizzate
