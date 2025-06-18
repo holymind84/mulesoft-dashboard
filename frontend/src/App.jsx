@@ -17,7 +17,10 @@ function App() {
 
   const fetchEnvironments = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/environments');
+      // --- MODIFICA CHIAVE QUI ---
+      // La chiamata ora usa un percorso relativo che verrà gestito dal proxy di Vite.
+      const res = await fetch('/api/environments'); 
+      
       if (!res.ok) {
         throw new Error('Errore nel recupero degli ambienti');
       }
