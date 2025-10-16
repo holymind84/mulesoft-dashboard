@@ -9,6 +9,7 @@ React-based frontend for the Mulesoft Dashboard.
 - Worker and core utilization
 - Excel export functionality
 - Real-time updates
+- API Manager
 
 ### Object Store Statistics
 - General usage metrics
