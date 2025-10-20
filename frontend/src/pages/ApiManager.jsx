@@ -208,7 +208,7 @@ function ApiManager({ selectedEnv }) {
           </thead>
           <tbody>
             {filteredApis.map((api) => (
-              <tr key={`${api.name}-${api.version}`} className="api-row">
+              <tr key={`${api.id}-${api.name}-${api.version}-${api.instance}`} className="api-row">
                 <td className="column-name">{api.name}</td>
                 <td className="column-version">{api.version}</td>
                 <td className="column-status">
