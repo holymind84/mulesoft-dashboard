@@ -19,6 +19,8 @@ export default defineConfig({
     // Opzionale: imposta la porta di sviluppo a 3000, la stessa usata di default da CRA
     port: 3000, 
     open: true,
+    // Configurazione per gestire il client-side routing (SPA)
+    historyApiFallback: true,
     // Configura il proxy per inoltrare le chiamate API ed evitare errori CORS
     proxy: {
       // Tutte le richieste che iniziano con '/api' verranno reindirizzate
@@ -30,5 +32,9 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
-  }
+  },
+  
+  // Configurazione per gestire il client-side routing (SPA)
+  // Reindirizza tutte le richieste non-API all'index.html
+  appType: 'spa'
 });
