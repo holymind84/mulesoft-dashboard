@@ -286,15 +286,14 @@ app.get('/api/apimanager', async (req, res) => {
     log(`API Manager response structure: ${JSON.stringify(response.data).substring(0, 200)}...`);
     
     // Transform the response to match our frontend needs
-    // Check if response.data is an array or has an 'apis' property
+    // Gestisci SOLO i dati che hanno un array apis
     let apis = [];
     
     if (Array.isArray(response.data)) {
-      // If response.data is already an array
-      // Create one row for each api in the apis array of each asset
+      // Se response.data è un array, gestisci solo gli elementi con apis array
       response.data.forEach(asset => {
         if (asset.apis && Array.isArray(asset.apis) && asset.apis.length > 0) {
-          // Create a row for each api in the apis array
+          // Crea una riga per ogni api nell'array apis
           asset.apis.forEach(apiItem => {
             apis.push({
               id: apiItem.id || asset.id || '',
@@ -302,7 +301,7 @@ app.get('/api/apimanager', async (req, res) => {
               version: apiItem.productVersion || apiItem.version || asset.productVersion || 'N/A',
               status: apiItem.status || asset.status || 'Inactive',
               type: apiItem.type || asset.type || 'REST',
-              createdDate: apiItem.createdDate || asset.createdDate || new Date().toISOString(),
+              createdDate: (apiItem.audit?.created?.date) || (asset.audit?.created?.date) || apiItem.createdDate || asset.createdDate || new Date().toISOString(),
               endpoint: apiItem.endpoint || asset.endpoint || '',
               assetId: asset.assetId || '',
               assetVersion: asset.assetVersion || '',
@@ -312,30 +311,14 @@ app.get('/api/apimanager', async (req, res) => {
               activeContractsCount: apiItem.activeContractsCount || asset.activeContractsCount || 0
             });
           });
-        } else {
-          // If no apis array, create a single entry for the asset
-          apis.push({
-            id: asset.id || '',
-            name: asset.assetId || asset.name || 'Unnamed API',
-            version: asset.productVersion || asset.version || 'N/A',
-            status: asset.status || 'Inactive',
-            type: asset.type || 'REST',
-            createdDate: asset.createdDate || new Date().toISOString(),
-            endpoint: asset.endpoint || '',
-            assetId: asset.assetId || '',
-            assetVersion: asset.assetVersion || '',
-            productVersion: asset.productVersion || '',
-            instanceLabel: asset.instanceLabel || '',
-            instance: asset.id || '',
-            activeContractsCount: asset.activeContractsCount || 0
-          });
         }
+        // IGNORA gli asset che non hanno un array apis
       });
     } else if (response.data && response.data.apis && Array.isArray(response.data.apis)) {
-      // If response.data has an 'apis' property that is an array
+      // Se response.data ha una proprietà 'apis' che è un array
       response.data.apis.forEach(asset => {
         if (asset.apis && Array.isArray(asset.apis) && asset.apis.length > 0) {
-          // Create a row for each api in the apis array
+          // Crea una riga per ogni api nell'array apis
           asset.apis.forEach(apiItem => {
             apis.push({
               id: apiItem.id || asset.id || '',
@@ -343,7 +326,7 @@ app.get('/api/apimanager', async (req, res) => {
               version: apiItem.productVersion || apiItem.version || asset.productVersion || 'N/A',
               status: apiItem.status || asset.status || 'Inactive',
               type: apiItem.type || asset.type || 'REST',
-              createdDate: apiItem.createdDate || asset.createdDate || new Date().toISOString(),
+              createdDate: (apiItem.audit?.created?.date) || (asset.audit?.created?.date) || apiItem.createdDate || asset.createdDate || new Date().toISOString(),
               endpoint: apiItem.endpoint || asset.endpoint || '',
               assetId: asset.assetId || '',
               assetVersion: asset.assetVersion || '',
@@ -353,42 +336,22 @@ app.get('/api/apimanager', async (req, res) => {
               activeContractsCount: apiItem.activeContractsCount || asset.activeContractsCount || 0
             });
           });
-        } else {
-          // If no apis array, create a single entry for the asset
-          apis.push({
-            id: asset.id || '',
-            name: asset.assetId || asset.name || 'Unnamed API',
-            version: asset.productVersion || asset.version || 'N/A',
-            status: asset.status || 'Inactive',
-            type: asset.type || 'REST',
-            createdDate: asset.createdDate || new Date().toISOString(),
-            endpoint: asset.endpoint || '',
-            assetId: asset.assetId || '',
-            assetVersion: asset.assetVersion || '',
-            productVersion: asset.productVersion || '',
-            instanceLabel: asset.instanceLabel || '',
-            instance: asset.id || '',
-            activeContractsCount: asset.activeContractsCount || 0
-          });
         }
+        // IGNORA gli asset che non hanno un array apis
       });
     } else if (response.data && typeof response.data === 'object') {
-      // If response.data is an object but doesn't have an 'apis' property
-      // Try to extract API data from the object structure
-      log('Response does not contain an apis array, attempting to extract API data from object');
-      
-      // Check if there are any array properties that might contain API data
+      // Se response.data è un oggetto, cerca solo array con proprietà apis
       const arrayProps = Object.keys(response.data).filter(key => 
         Array.isArray(response.data[key]) && response.data[key].length > 0);
       
       if (arrayProps.length > 0) {
-        // Use the first array property found
+        // Usa la prima proprietà array trovata
         const firstArrayProp = arrayProps[0];
         log(`Using '${firstArrayProp}' property as API data source`);
         
         response.data[firstArrayProp].forEach(asset => {
           if (asset.apis && Array.isArray(asset.apis) && asset.apis.length > 0) {
-            // Create a row for each api in the apis array
+            // Crea una riga per ogni api nell'array apis
             asset.apis.forEach(apiItem => {
               apis.push({
                 id: apiItem.id || asset.id || '',
@@ -396,7 +359,7 @@ app.get('/api/apimanager', async (req, res) => {
                 version: apiItem.productVersion || apiItem.version || asset.productVersion || 'N/A',
                 status: apiItem.status || asset.status || 'Inactive',
                 type: apiItem.type || asset.type || 'REST',
-                createdDate: apiItem.createdDate || asset.createdDate || new Date().toISOString(),
+                createdDate: (apiItem.audit?.created?.date) || (asset.audit?.created?.date) || apiItem.createdDate || asset.createdDate || new Date().toISOString(),
                 endpoint: apiItem.endpoint || asset.endpoint || '',
                 assetId: asset.assetId || '',
                 assetVersion: asset.assetVersion || '',
@@ -406,36 +369,19 @@ app.get('/api/apimanager', async (req, res) => {
                 activeContractsCount: apiItem.activeContractsCount || asset.activeContractsCount || 0
               });
             });
-          } else {
-            // If no apis array, create a single entry for the asset
-            apis.push({
-              id: asset.id || '',
-              name: asset.assetId || asset.name || 'Unnamed API',
-              version: asset.productVersion || asset.version || 'N/A',
-              status: asset.status || 'Inactive',
-              type: asset.type || 'REST',
-              createdDate: asset.createdDate || new Date().toISOString(),
-              endpoint: asset.endpoint || '',
-              assetId: asset.assetId || '',
-              assetVersion: asset.assetVersion || '',
-              productVersion: asset.productVersion || '',
-              instanceLabel: asset.instanceLabel || '',
-              instance: asset.id || '',
-              activeContractsCount: asset.activeContractsCount || 0
-            });
           }
+          // IGNORA gli asset che non hanno un array apis
         });
-      } else {
-        // If no array properties found, check if the object itself has an apis array
-        if (response.data.apis && Array.isArray(response.data.apis) && response.data.apis.length > 0) {
-          response.data.apis.forEach(apiItem => {
-            apis.push({
+      } else if (response.data.apis && Array.isArray(response.data.apis) && response.data.apis.length > 0) {
+        // Se l'oggetto stesso ha un array apis
+        response.data.apis.forEach(apiItem => {
+          apis.push({
             id: apiItem.id || response.data.id || '',
             name: apiItem.assetId || response.data.assetId || apiItem.name || response.data.name || 'Unnamed API',
             version: apiItem.productVersion || apiItem.version || response.data.productVersion || 'N/A',
             status: apiItem.status || response.data.status || 'Inactive',
             type: apiItem.type || response.data.type || 'REST',
-            createdDate: apiItem.createdDate || response.data.createdDate || new Date().toISOString(),
+            createdDate: (apiItem.audit?.created?.date) || (response.data.audit?.created?.date) || apiItem.createdDate || response.data.createdDate || new Date().toISOString(),
             endpoint: apiItem.endpoint || response.data.endpoint || '',
             assetId: response.data.assetId || '',
             assetVersion: response.data.assetVersion || '',
@@ -444,26 +390,9 @@ app.get('/api/apimanager', async (req, res) => {
             instance: apiItem.id || response.data.id || '',
             activeContractsCount: apiItem.activeContractsCount || response.data.activeContractsCount || 0
           });
-          });
-        } else {
-          // If still no apis array, create a single entry
-          apis.push({
-            id: response.data.id || '',
-            name: response.data.assetId || response.data.name || 'API Information',
-            version: response.data.productVersion || response.data.version || 'N/A',
-            status: response.data.status || 'Unknown',
-            type: response.data.type || 'REST',
-            createdDate: response.data.createdDate || new Date().toISOString(),
-            endpoint: response.data.endpoint || '',
-            assetId: response.data.assetId || '',
-            assetVersion: response.data.assetVersion || '',
-            productVersion: response.data.productVersion || '',
-            instanceLabel: response.data.instanceLabel || '',
-            instance: response.data.id || '',
-            activeContractsCount: response.data.activeContractsCount || 0
-          });
-        }
+        });
       }
+      // IGNORA completamente gli oggetti che non hanno array apis
     }
 
     log(`Found ${apis.length} APIs`);
