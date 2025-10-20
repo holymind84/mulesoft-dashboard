@@ -38,6 +38,7 @@ function ApiManager({ selectedEnv }) {
       'Status': api.status,
       'Type': api.type,
       'Created Date': new Date(api.createdDate).toLocaleDateString(),
+      'Instance': api.instance || '',
       'Active Contracts': api.activeContractsCount
     }));
 
@@ -46,7 +47,7 @@ function ApiManager({ selectedEnv }) {
     
     const colWidths = [
       { wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
-      { wch: 20 }, { wch: 15 }
+      { wch: 20 }, { wch: 20 }, { wch: 15 }
     ];
     ws['!cols'] = colWidths;
 
@@ -201,6 +202,7 @@ function ApiManager({ selectedEnv }) {
               <th className="column-status sortable" onClick={() => handleSort('status')}>Status</th>
               <th className="column-type sortable" onClick={() => handleSort('type')}>Type</th>
               <th className="column-created sortable" onClick={() => handleSort('createdDate')}>Created Date</th>
+              <th className="column-instance sortable" onClick={() => handleSort('instance')}>Instance</th>
               <th className="column-contracts sortable" onClick={() => handleSort('activeContractsCount')}>Active Contracts</th>
             </tr>
           </thead>
@@ -224,6 +226,7 @@ function ApiManager({ selectedEnv }) {
                 </td>
                 <td className="column-type">{api.type}</td>
                 <td className="column-created">{new Date(api.createdDate).toLocaleDateString()}</td>
+                <td className="column-instance">{api.instance || ''}</td>
                 <td className="column-contracts">{api.activeContractsCount}</td>
               </tr>
             ))}

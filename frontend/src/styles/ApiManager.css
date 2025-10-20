@@ -184,12 +184,13 @@
 .apis-table .column-version,
 .apis-table .column-status,
 .apis-table .column-type {
-  width: 15%;
+  width: 12%;
 }
 
 .apis-table .column-created,
+.apis-table .column-instance,
 .apis-table .column-contracts {
-  width: 15%;
+  width: 12%;
 }
 
 .apis-table .column-contracts {
