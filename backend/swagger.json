@@ -12,6 +12,87 @@
     }
   ],
   "paths": {
+    "/api/apimanager": {
+      "get": {
+        "summary": "Get API Manager APIs",
+        "description": "Returns a list of APIs from API Manager for the specified environment",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-anypnt-env-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Environment ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of APIs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "version": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "createdDate": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "lastUpdatedDate": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "endpoint": {
+                        "type": "string"
+                      },
+                      "assetId": {
+                        "type": "string"
+                      },
+                      "assetVersion": {
+                        "type": "string"
+                      },
+                      "productVersion": {
+                        "type": "string"
+                      },
+                      "instanceLabel": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/api/token/status": {
       "get": {
         "summary": "Get standard token status",

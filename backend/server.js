@@ -248,6 +248,164 @@ app.get('/api/token/status', (req, res) => {
  }
 });
 
+// New API Manager endpoint
+app.get('/api/apimanager', async (req, res) => {
+  try {
+    log('=== API Manager Request ===');
+    await ensureValidCoreToken();
+    
+    const environmentId = req.headers['x-anypnt-env-id'];
+    const baseUrl = getBaseUrl(process.env.REGION);
+    
+    log(`Endpoint: GET /api/apimanager`);
+    log(`Environment ID: ${environmentId}`);
+    log(`Organization ID: ${process.env.ORGANIZATION_ID}`);
+    
+    if (!process.env.ORGANIZATION_ID) {
+      throw new Error('Missing ORGANIZATION_ID in environment variables');
+    }
+
+    if (!environmentId) {
+      throw new Error('Environment ID not specified');
+    }
+
+    // Fetch API Manager APIs
+    const endpoint = `${baseUrl}/apimanager/api/v1/organizations/${process.env.ORGANIZATION_ID}/environments/${environmentId}/apis`;
+    log(`API Manager endpoint: ${endpoint}`);
+    
+    const response = await axios.get(endpoint, {
+      headers: {
+        'Authorization': `Bearer ${currentCoreToken.access_token}`
+      },
+      params: {
+        limit: 250  // Increase limit to get more records
+      }
+    });
+
+    // Log the response structure to understand the format
+    log(`API Manager response structure: ${JSON.stringify(response.data).substring(0, 200)}...`);
+    
+    // Transform the response to match our frontend needs
+    // Check if response.data is an array or has an 'apis' property
+    let apis = [];
+    
+    if (Array.isArray(response.data)) {
+      // If response.data is already an array
+      apis = response.data.map(api => {
+        // Check if api has an apis array and use the last item for version and status
+        const lastApiVersion = api.apis && Array.isArray(api.apis) && api.apis.length > 0 
+          ? api.apis[api.apis.length - 1] 
+          : null;
+          
+        return {
+          id: api.id || '',
+          name: api.assetId || api.name || 'Unnamed API',
+          version: (lastApiVersion && lastApiVersion.productVersion) || api.productVersion || api.version || 'N/A',
+          status: (lastApiVersion && lastApiVersion.status) || api.status || 'Inactive',
+          type: api.type || 'REST',
+          createdDate: api.createdDate || new Date().toISOString(),
+          endpoint: api.endpoint || '',
+          assetId: api.assetId || '',
+          assetVersion: api.assetVersion || '',
+          productVersion: api.productVersion || '',
+          instanceLabel: api.instanceLabel || '',
+          activeContractsCount: (lastApiVersion && lastApiVersion.activeContractsCount) || api.activeContractsCount || 0
+        };
+      });
+    } else if (response.data && response.data.apis && Array.isArray(response.data.apis)) {
+      // If response.data has an 'apis' property that is an array
+      apis = response.data.apis.map(api => {
+        const lastApiVersion = api.apis && Array.isArray(api.apis) && api.apis.length > 0 
+          ? api.apis[api.apis.length - 1] 
+          : null;
+          
+        return {
+          id: api.id || '',
+          name: api.assetId || api.name || 'Unnamed API',
+          version: (lastApiVersion && lastApiVersion.productVersion) || api.productVersion || api.version || 'N/A',
+          status: (lastApiVersion && lastApiVersion.status) || api.status || 'Inactive',
+          type: api.type || 'REST',
+          createdDate: api.createdDate || new Date().toISOString(),
+          lastUpdatedDate: api.lastUpdatedDate || new Date().toISOString(),
+          endpoint: api.endpoint || '',
+          assetId: api.assetId || '',
+          assetVersion: api.assetVersion || '',
+          productVersion: api.productVersion || '',
+          instanceLabel: api.instanceLabel || '',
+          activeContractsCount: (lastApiVersion && lastApiVersion.activeContractsCount) || api.activeContractsCount || 0
+        };
+      });
+    } else if (response.data && typeof response.data === 'object') {
+      // If response.data is an object but doesn't have an 'apis' property
+      // Try to extract API data from the object structure
+      log('Response does not contain an apis array, attempting to extract API data from object');
+      
+      // Check if there are any array properties that might contain API data
+      const arrayProps = Object.keys(response.data).filter(key => 
+        Array.isArray(response.data[key]) && response.data[key].length > 0);
+      
+      if (arrayProps.length > 0) {
+        // Use the first array property found
+        const firstArrayProp = arrayProps[0];
+        log(`Using '${firstArrayProp}' property as API data source`);
+        
+        apis = response.data[firstArrayProp].map(api => {
+          // Check if api has an apis array and use the last item for version and status
+          const lastApiVersion = api.apis && Array.isArray(api.apis) && api.apis.length > 0 
+            ? api.apis[api.apis.length - 1] 
+            : null;
+            
+          return {
+            id: api.id || '',
+            name: api.assetId || api.name || 'Unnamed API',
+            version: (lastApiVersion && lastApiVersion.productVersion) || api.productVersion || api.version || 'N/A',
+            status: (lastApiVersion && lastApiVersion.status) || api.status || 'Inactive',
+            type: api.type || 'REST',
+            createdDate: api.createdDate || new Date().toISOString(),
+            lastUpdatedDate: api.lastUpdatedDate || new Date().toISOString(),
+            endpoint: api.endpoint || '',
+            assetId: api.assetId || '',
+            assetVersion: api.assetVersion || '',
+            productVersion: api.productVersion || '',
+            instanceLabel: api.instanceLabel || '',
+            activeContractsCount: (lastApiVersion && lastApiVersion.activeContractsCount) || api.activeContractsCount || 0
+          };
+        });
+      } else {
+        // If no array properties found, create a single API entry from the response data
+        log('No array properties found in response, creating a single API entry');
+        // Check if response.data has an apis array and use the last item for version and status
+        const lastApiVersion = response.data.apis && Array.isArray(response.data.apis) && response.data.apis.length > 0 
+          ? response.data.apis[response.data.apis.length - 1] 
+          : null;
+          
+        apis = [{
+           id: response.data.id || '',
+           name: response.data.assetId || response.data.name || 'API Information',
+          version: (lastApiVersion && lastApiVersion.productVersion) || response.data.productVersion || response.data.version || 'N/A',
+          status: (lastApiVersion && lastApiVersion.status) || response.data.status || 'Unknown',
+          type: response.data.type || 'REST',
+          createdDate: response.data.createdDate || new Date().toISOString(),
+          lastUpdatedDate: response.data.lastUpdatedDate || new Date().toISOString(),
+          endpoint: response.data.endpoint || '',
+          assetId: response.data.assetId || '',
+          assetVersion: response.data.assetVersion || '',
+          productVersion: response.data.productVersion || '',
+          instanceLabel: response.data.instanceLabel || '',
+          activeContractsCount: (lastApiVersion && lastApiVersion.activeContractsCount) || response.data.activeContractsCount || 0
+        }];
+      }
+    }
+
+    log(`Found ${apis.length} APIs`);
+    res.json(apis);
+
+  } catch (error) {
+    logError('Error in API Manager request', error.response?.data || error.message);
+    handleError(error, res);
+  }
+});
+
 app.get('/api/token/core/status', (req, res) => {
  if (coreTokenError) {
    res.status(500).json({ error: coreTokenError });

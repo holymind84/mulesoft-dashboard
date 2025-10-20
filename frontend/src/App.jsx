@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-import { BarChart2, Layout, Database, ChevronDown, ChevronRight } from 'lucide-react';
+import { BarChart2, Layout, Database, ChevronDown, ChevronRight, Globe } from 'lucide-react';
 import EnvironmentSelector from './components/shared/EnvironmentSelector';
 import General from './pages/General';
 import ByApplication from './pages/ByApplication';
 import Core from './pages/Core';
+import ApiManager from './pages/ApiManager';
 import './styles/App.css';
 
 function App() {
   const [isObjectStoreOpen, setIsObjectStoreOpen] = useState(false);
   const [isCoreOpen, setIsCoreOpen] = useState(false);
+  const [isApiManagerOpen, setIsApiManagerOpen] = useState(false);
   
   // Environment state
   const [selectedEnv, setSelectedEnv] = useState('');
@@ -65,6 +67,28 @@ function App() {
               </div>
             )}
 
+            <div className="nav-link submenu-header" onClick={() => setIsApiManagerOpen(!isApiManagerOpen)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Globe size={20} />
+                <span>API Manager</span>
+              </div>
+              {isApiManagerOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </div>
+
+            {isApiManagerOpen && (
+              <div className="submenu">
+                <NavLink 
+                  to="/api-manager" 
+                  className={({ isActive }) => 
+                    `nav-link submenu-item ${isActive ? 'active' : ''}`
+                  }
+                >
+                  <Globe size={16} />
+                  <span>APIs</span>
+                </NavLink>
+              </div>
+            )}
+
             <div className="nav-link submenu-header" onClick={() => setIsObjectStoreOpen(!isObjectStoreOpen)}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <Layout size={20} />
@@ -114,6 +138,7 @@ function App() {
               <Route path="/core" element={<Core selectedEnv={selectedEnv} />} />
               <Route path="/" element={<General selectedEnv={selectedEnv} />} />
               <Route path="/by-application" element={<ByApplication selectedEnv={selectedEnv} />} />
+              <Route path="/api-manager" element={<ApiManager selectedEnv={selectedEnv} />} />
             </Routes>
           </div>
         </div>
