@@ -99,6 +99,19 @@ function ApiManager({ selectedEnv }) {
     api.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Calculate statistics for each status
+  const getStatusStats = useCallback(() => {
+    if (!apis.length) return {};
+
+    return apis.reduce((acc, api) => {
+      const status = api.status || 'Unknown';
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {});
+  }, [apis]);
+
+  const statusStats = getStatusStats();
+
   const renderSkeletonTable = () => (
     <div className="skeleton-table">
       <div className="skeleton-header">
@@ -130,6 +143,24 @@ function ApiManager({ selectedEnv }) {
                 <span className="label">Total APIs:</span>
                 <span className="total-value">{loading ? '-' : apis.length}</span>
               </div>
+
+              {!loading && Object.keys(statusStats).length > 0 && (
+                <div className="status-stats">
+                  <span className="label">By Status:</span>
+                  <div className="status-counts">
+                    {Object.entries(statusStats).map(([status, count]) => (
+                      <div key={status} className="status-count">
+                        <span className={`status-indicator status-${status.toLowerCase()}`}>
+                          {status.toLowerCase() === 'active' ? '●' : '○'}
+                        </span>
+                        <span className="status-name">{status}:</span>
+                        <span className="status-value">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {lastUpdate && (
                 <div className="last-update">
                   Last update: {lastUpdate.toLocaleString('en-US')}
