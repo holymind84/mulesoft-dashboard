@@ -1,15 +1,16 @@
 # MuleSoft Dashboard
 
-A comprehensive monitoring solution for MuleSoft applications and Object Store metrics.
+A comprehensive monitoring solution for MuleSoft applications API and Object Store metrics.
 
 ## Features
 
 - Real-time CloudHub application monitoring
-- Support CloudHub 1.0 and CloudHub 2.0
+- API Manager statistics
 - Object Store usage statistics
 - Multi-environment support
 - Core utilization tracking
 - Exportable reports (Excel)
+- Support CloudHub 1.0 and CloudHub 2.0
 
 ## Project Structure
 
@@ -83,3 +84,4 @@ Your support helps:
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details
+
